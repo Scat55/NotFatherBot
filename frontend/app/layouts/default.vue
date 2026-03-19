@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { AppHeader } from "@/components/header";
 import { useUserStore } from "@/stores/user";
-import { Home, Heart, Users, User } from "lucide-vue-next";
+import { Home, Heart, Users, User, Sparkles } from "lucide-vue-next";
 
 const userStore = useUserStore();
 const route = useRoute();
@@ -10,6 +9,7 @@ const routeList = [
   { name: "Главная", link: "/", icon: Home },
   { name: "Хотелки", link: "/wishlist", icon: Heart },
   { name: "Пары", link: "/couples", icon: Users },
+  { name: "Подписка", link: "/subscription", icon: Sparkles },
   { name: "Профиль", link: "/profile", icon: User },
 ];
 
@@ -35,7 +35,7 @@ const isActive = (link: string) => {
             class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
             :class="
               isActive(item.link)
-                ? 'bg-primary/15 text-primary'
+                ? 'bg-primary/50 text-foreground'
                 : 'text-muted-foreground hover:bg-primary/8 hover:text-foreground'
             "
           >
@@ -50,8 +50,8 @@ const isActive = (link: string) => {
               class="w-4.5 h-4.5 shrink-0 transition-transform duration-200 group-hover:scale-110"
               :class="
                 isActive(item.link)
-                  ? 'text-primary'
-                  : 'text-muted-foreground group-hover:text-foreground'
+                  ? 'text-foreground'
+                  : 'text-muted-foreground'
               "
             />
             <span>{{ item.name }}</span>

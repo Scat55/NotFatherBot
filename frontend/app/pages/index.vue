@@ -120,13 +120,15 @@ const progressPercent = computed(() =>
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            class="text-xs text-muted-foreground shrink-0 gap-1"
-          >
-            Подробнее <ChevronRight class="w-3 h-3" />
-          </Button>
+          <NuxtLink to="/subscription">
+            <Button
+              variant="ghost"
+              size="sm"
+              class="text-xs text-muted-foreground shrink-0 gap-1"
+            >
+              Подробнее <ChevronRight class="w-3 h-3" />
+            </Button>
+          </NuxtLink>
         </div>
 
         <Separator class="my-3" />
