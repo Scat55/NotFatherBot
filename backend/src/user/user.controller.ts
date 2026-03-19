@@ -44,6 +44,7 @@ export class UsersController {
       firstName: user.firstName,
       lastName: user.lastName,
       photoUrl: user.photoUrl,
+      createdAt: user.createdAt,
     };
   }
 }

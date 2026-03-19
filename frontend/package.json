@@ -10,20 +10,26 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/eslint": "1.15.2",
+    "@nuxt/eslint": "^1.15.2",
     "@nuxt/fonts": "^0.14.0",
+    "@pinia/nuxt": "^0.11.3",
+    "@vueuse/core": "^14.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.577.0",
     "nuxt": "^4.3.1",
-    "reka-ui": "^2.9.0",
+    "pinia": "^3.0.4",
+    "reka-ui": "^2.9.2",
     "shadcn-nuxt": "2.4.3",
     "tailwind-merge": "^3.5.0",
     "vue": "^3.5.30",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@nuxtjs/color-mode": "3.5.2",
     "@tailwindcss/vite": "^4.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.1",
     "prettier-plugin-vue": "^1.1.6",
     "tailwindcss": "^4.2.1",
