@@ -92,7 +92,7 @@ const isActive = (link: string) => {
           :to="item.link"
           class="flex flex-col items-center gap-1 px-4 py-1.5 rounded-xl transition-all duration-200 min-w-[60px]"
           :class="
-            isActive(item.link) ? 'text-primary' : 'text-muted-foreground'
+            isActive(item.link) ? 'text-foreground' : 'text-muted-foreground'
           "
         >
           <div
