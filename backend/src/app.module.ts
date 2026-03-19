@@ -8,6 +8,9 @@ import { PrismaService } from './prisma/prisma.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './user/user.module';
+import { CouplesModule } from './couples/couples.module';
+import { WishesModule } from './wishes/wishes.module';
+import { CyclesModule } from './cycles/cycles.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { UsersModule } from './user/user.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    CouplesModule,
+    WishesModule,
+    CyclesModule,
   ],
   controllers: [BotController],
   providers: [PrismaService, BotUpdate],

@@ -32,10 +32,6 @@ const isDark = computed({
     colorMode.preference = val ? "dark" : "light";
   },
 });
-
-const themeTitle = computed(() => {
-  return isDark.value ? "Темная тема" : "Светлая тема";
-});
 </script>
 
 <template>
@@ -43,10 +39,10 @@ const themeTitle = computed(() => {
     <!-- Ambient blobs -->
     <div class="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
       <div
-        class="absolute -top-32 -right-24 w-125 h-125 rounded-full bg-primary opacity-15 blur-[90px] animate-[drift_12s_ease-in-out_infinite_alternate]"
+        class="absolute -top-32 -right-24 w-[500px] h-[500px] rounded-full bg-primary opacity-15 blur-[90px] animate-[drift_12s_ease-in-out_infinite_alternate]"
       />
       <div
-        class="absolute -bottom-24 -left-20 w-90 h- rounded-full bg-accent opacity-15 blur-[80px] animate-[drift_16s_ease-in-out_infinite_alternate-reverse]"
+        class="absolute -bottom-24 -left-20 w-[360px] h-[360px] rounded-full bg-accent opacity-15 blur-[80px] animate-[drift_16s_ease-in-out_infinite_alternate-reverse]"
       />
     </div>
 
@@ -56,7 +52,7 @@ const themeTitle = computed(() => {
       <!-- Top: Avatar card -->
       <Card class="overflow-hidden border-border/60">
         <div
-          class="h-28 bg-linear-to-r from-primary/30 via-accent/20 to-primary/10"
+          class="h-28 bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10"
         />
         <CardContent class="pt-0 pb-6 px-6">
           <div
@@ -64,7 +60,7 @@ const themeTitle = computed(() => {
           >
             <div class="relative w-fit">
               <div
-                class="absolute inset-0 rounded-full bg-linear-to-br from-primary to-accent blur-[6px] opacity-60 scale-110"
+                class="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-accent blur-[6px] opacity-60 scale-110"
               />
               <Avatar
                 class="relative w-20 h-20 border-4 border-card text-lg font-semibold"
@@ -104,6 +100,7 @@ const themeTitle = computed(() => {
 
           <Separator class="my-5" />
 
+          <!-- Stats -->
           <div class="grid grid-cols-3 gap-4 text-center">
             <div class="flex flex-col gap-0.5">
               <span class="text-2xl font-bold text-foreground">{{
@@ -125,11 +122,11 @@ const themeTitle = computed(() => {
             </div>
             <div class="flex flex-col gap-0.5">
               <span class="text-2xl font-bold text-foreground">{{
-                user?.matchesCount ?? 0
+                user?.completedTasks ?? 0
               }}</span>
               <span
                 class="text-xs text-muted-foreground uppercase tracking-widest"
-                >Совпадений</span
+                >Выполнено</span
               >
             </div>
           </div>
@@ -174,12 +171,12 @@ const themeTitle = computed(() => {
               v-for="item in [
                 {
                   icon: '🎯',
-                  label: 'Заданий пропущено',
+                  label: 'Пропущено',
                   value: user?.skippedTasks ?? 0,
                 },
                 {
                   icon: '⭐',
-                  label: 'Заданий выполнено',
+                  label: 'Выполнено',
                   value: user?.completedTasks ?? 0,
                 },
                 {
@@ -219,7 +216,10 @@ const themeTitle = computed(() => {
               v-for="item in [
                 { label: 'Имя', value: user?.firstName },
                 { label: 'Фамилия', value: user?.lastName },
-                { label: 'Email', value: user?.email },
+                {
+                  label: 'Username',
+                  value: user?.username ? `@${user.username}` : null,
+                },
                 { label: 'Дата регистрации', value: joinDate },
               ]"
               :key="item.label"
@@ -251,9 +251,9 @@ const themeTitle = computed(() => {
             >
               <div class="flex items-center gap-2.5">
                 <span class="text-base">{{ isDark ? "🌙" : "☀️" }}</span>
-                <span class="text-sm font-medium text-foreground">{{
-                  themeTitle
-                }}</span>
+                <span class="text-sm font-medium text-foreground">
+                  {{ isDark ? "Тёмная тема" : "Светлая тема" }}
+                </span>
               </div>
               <Switch v-model="isDark" />
             </div>

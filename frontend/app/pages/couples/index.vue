@@ -10,7 +10,6 @@ import {
   Check,
   Users,
   Heart,
-  Coins,
   LogOut,
   Clock,
 } from "lucide-vue-next";
@@ -19,39 +18,60 @@ definePageMeta({
   middleware: ["auth"],
 });
 
-interface Couple {
+const config = useRuntimeConfig();
+const token = useCookie("token");
+
+interface Partner {
   id: number;
-  partnerName: string;
-  partnerPhoto?: string;
-  role: "creator" | "partner";
-  wishCount: number;
-  completedCount: number;
-  partnerCoins: number;
-  joinedAt: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  photoUrl?: string;
 }
 
-// TODO: заменить на реальные данные из API
-const couples = ref<Couple[]>([
-  {
-    id: 1,
-    partnerName: "Катя",
-    role: "partner",
-    wishCount: 5,
-    completedCount: 2,
-    partnerCoins: 80,
-    joinedAt: "1 марта 2026",
-  },
-]);
+interface Couple {
+  id: number;
+  creatorId: number;
+  partnerId?: number;
+  inviteToken?: string;
+  inviteExpiresAt?: string;
+  createdAt: string;
+  creator: Partner;
+  partner?: Partner;
+  _count: { wishes: number };
+}
 
-// Pending invite
+const headers = computed(() => ({
+  Authorization: `Bearer ${token.value}`,
+}));
+
+const { data: couples, refresh } = await useFetch<Couple[]>(
+  `${config.public.apiBase}/couples`,
+  { headers },
+);
+
+const { data: userMe } = await useFetch<{ id: number }>(
+  `${config.public.apiBase}/users/me`,
+  { headers },
+);
+
 const pendingInvite = ref<string | null>(null);
 const copiedInvite = ref(false);
 const showLeaveConfirm = ref<number | null>(null);
+const loading = ref(false);
 
-// TODO: заменить на реальный API-вызов
-function createCouple() {
-  const fakeToken = Math.random().toString(36).substring(2, 10);
-  pendingInvite.value = `${window.location.origin}/invite/${fakeToken}`;
+async function createCouple() {
+  loading.value = true;
+  try {
+    const res = await $fetch<Couple>(`${config.public.apiBase}/couples`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token.value}` },
+    });
+    pendingInvite.value = `${window.location.origin}/invite/${res.inviteToken}`;
+    await refresh();
+  } finally {
+    loading.value = false;
+  }
 }
 
 async function copyInvite() {
@@ -65,13 +85,28 @@ function cancelInvite() {
   pendingInvite.value = null;
 }
 
-function leaveCouple(id: number) {
-  couples.value = couples.value.filter((c) => c.id !== id);
+async function leaveCouple(id: number) {
+  await $fetch(`${config.public.apiBase}/couples/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token.value}` },
+  });
   showLeaveConfirm.value = null;
+  await refresh();
 }
 
-const progressPercent = (c: Couple) =>
-  c.wishCount > 0 ? Math.round((c.completedCount / c.wishCount) * 100) : 0;
+const isCreator = (couple: Couple) => couple.creatorId === userMe.value?.id;
+
+const partnerOf = (couple: Couple) =>
+  isCreator(couple) ? couple.partner : couple.creator;
+
+const progressPercent = (_couple: Couple) => 0;
+
+const formatDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 </script>
 
 <template>
@@ -81,10 +116,11 @@ const progressPercent = (c: Couple) =>
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-foreground">Пары</h1>
         <p class="text-sm text-muted-foreground mt-0.5">
-          {{ couples.length }} {{ couples.length === 1 ? "пара" : "пары" }}
+          {{ couples?.length ?? 0 }}
+          {{ couples?.length === 1 ? "пара" : "пары" }}
         </p>
       </div>
-      <Button class="gap-2" size="sm" @click="createCouple">
+      <Button class="gap-2" size="sm" :disabled="loading" @click="createCouple">
         <Plus class="w-4 h-4" />
         Создать пару
       </Button>
@@ -137,7 +173,7 @@ const progressPercent = (c: Couple) =>
           class="w-full text-muted-foreground"
           @click="cancelInvite"
         >
-          Отменить
+          Скрыть
         </Button>
       </CardContent>
     </Card>
@@ -151,40 +187,63 @@ const progressPercent = (c: Couple) =>
             <div class="flex items-center gap-3">
               <div class="relative">
                 <div
-                  class="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center text-lg font-bold text-primary"
+                  class="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center text-lg font-bold text-primary overflow-hidden"
                 >
-                  {{ couple.partnerName[0] }}
+                  <img
+                    v-if="partnerOf(couple)?.photoUrl"
+                    :src="partnerOf(couple)?.photoUrl"
+                    class="w-full h-full object-cover"
+                  />
+                  <span v-else>
+                    {{ partnerOf(couple)?.firstName?.[0] ?? "?" }}
+                  </span>
                 </div>
                 <span
+                  v-if="couple.partnerId"
                   class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card"
                 />
               </div>
               <div>
                 <p class="text-sm font-semibold text-foreground">
-                  {{ couple.partnerName }}
+                  {{
+                    partnerOf(couple)
+                      ? partnerOf(couple)?.username ||
+                        `${partnerOf(couple)?.firstName ?? ""} ${partnerOf(couple)?.lastName ?? ""}`.trim() ||
+                        "Без имени"
+                      : "Ожидает партнёра..."
+                  }}
                 </p>
                 <p class="text-xs text-muted-foreground">
-                  с {{ couple.joinedAt }}
+                  с {{ formatDate(couple.createdAt) }}
                 </p>
               </div>
             </div>
             <Badge variant="secondary" class="text-[10px] shrink-0">
-              {{ couple.role === "creator" ? "Создатель" : "Партнёр" }}
+              {{ isCreator(couple) ? "Создатель" : "Партнёр" }}
             </Badge>
+          </div>
+
+          <!-- Pending partner -->
+          <div
+            v-if="!couple.partnerId"
+            class="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border/40 rounded-xl px-3 py-2"
+          >
+            <Clock class="w-3.5 h-3.5 shrink-0" />
+            <span>Партнёр ещё не принял приглашение</span>
           </div>
 
           <Separator />
 
           <!-- Stats -->
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-2 gap-3">
             <div
               class="flex flex-col items-center gap-0.5 py-2.5 rounded-xl bg-background border border-border/50"
             >
               <div class="flex items-center gap-1">
                 <Heart class="w-3.5 h-3.5 text-primary" />
-                <span class="text-base font-bold text-foreground">{{
-                  couple.wishCount
-                }}</span>
+                <span class="text-base font-bold text-foreground">
+                  {{ couple._count.wishes }}
+                </span>
               </div>
               <span
                 class="text-[10px] text-muted-foreground uppercase tracking-wider"
@@ -194,60 +253,43 @@ const progressPercent = (c: Couple) =>
             <div
               class="flex flex-col items-center gap-0.5 py-2.5 rounded-xl bg-background border border-border/50"
             >
-              <div class="flex items-center gap-1">
-                <Check class="w-3.5 h-3.5 text-green-500" />
-                <span class="text-base font-bold text-foreground">{{
-                  couple.completedCount
-                }}</span>
-              </div>
+              <span class="text-base font-bold text-foreground">
+                {{ progressPercent(couple) }}%
+              </span>
               <span
                 class="text-[10px] text-muted-foreground uppercase tracking-wider"
-                >Выполнено</span
+                >Прогресс</span
               >
-            </div>
-            <div
-              class="flex flex-col items-center gap-0.5 py-2.5 rounded-xl bg-background border border-border/50"
-            >
-              <span class="text-base font-bold text-foreground"
-                >{{ couple.partnerCoins }} 🪙</span
-              >
-              <span
-                class="text-[10px] text-muted-foreground uppercase tracking-wider"
-                >Монет</span
-              >
-            </div>
-          </div>
-
-          <!-- Progress -->
-          <div>
-            <div
-              class="flex justify-between text-xs text-muted-foreground mb-1.5"
-            >
-              <span>Прогресс хотелок</span>
-              <span>{{ progressPercent(couple) }}%</span>
-            </div>
-            <div class="h-1.5 rounded-full bg-border/50 overflow-hidden">
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-                :style="{ width: `${progressPercent(couple)}%` }"
-              />
             </div>
           </div>
 
           <Separator />
 
-          <!-- Actions -->
+          <!-- Wishes button -->
+          <Button
+            variant="outline"
+            size="sm"
+            class="w-full gap-2"
+            @click="navigateTo(`/wishlist/${couple.id}`)"
+          >
+            <Heart class="w-3.5 h-3.5" />
+            Хотелки
+          </Button>
+
+          <!-- Leave confirm -->
           <div
             v-if="showLeaveConfirm === couple.id"
             class="flex flex-col gap-2"
           >
             <p class="text-sm text-center text-foreground">
-              Выйти из пары с
-              <span class="font-semibold">{{ couple.partnerName }}</span
-              >?
+              {{ isCreator(couple) ? "Удалить пару?" : "Выйти из пары?" }}
             </p>
             <p class="text-xs text-center text-muted-foreground">
-              Все хотелки и история останутся
+              {{
+                isCreator(couple)
+                  ? "Пара и все хотелки будут удалены"
+                  : "Все хотелки и история останутся"
+              }}
             </p>
             <div class="flex gap-2">
               <Button
@@ -256,7 +298,7 @@ const progressPercent = (c: Couple) =>
                 class="flex-1"
                 @click="leaveCouple(couple.id)"
               >
-                Выйти
+                {{ isCreator(couple) ? "Удалить" : "Выйти" }}
               </Button>
               <Button
                 variant="outline"
@@ -277,7 +319,7 @@ const progressPercent = (c: Couple) =>
             @click="showLeaveConfirm = couple.id"
           >
             <LogOut class="w-3.5 h-3.5" />
-            Выйти из пары
+            {{ isCreator(couple) ? "Удалить пару" : "Выйти из пары" }}
           </Button>
         </CardContent>
       </Card>
@@ -285,7 +327,7 @@ const progressPercent = (c: Couple) =>
 
     <!-- Empty state -->
     <div
-      v-if="couples.length === 0 && !pendingInvite"
+      v-if="!couples?.length && !pendingInvite"
       class="flex flex-col items-center justify-center py-16 gap-3"
     >
       <div
@@ -297,7 +339,7 @@ const progressPercent = (c: Couple) =>
       <p class="text-sm text-muted-foreground text-center max-w-xs">
         Создай пару и отправь партнёру ссылку-приглашение
       </p>
-      <Button class="gap-2 mt-2" @click="createCouple">
+      <Button class="gap-2 mt-2" :disabled="loading" @click="createCouple">
         <Plus class="w-4 h-4" />
         Создать пару
       </Button>

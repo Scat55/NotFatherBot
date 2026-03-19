@@ -13,23 +13,38 @@ model User {
   firstName  String?
   lastName   String?
   photoUrl   String?
-  webToken   String?  @unique // ← токен для входа на фронт
+  balance    Int      @default(0)
   createdAt  DateTime @default(now())
 
-  couplesAsGirl Couple[] @relation("Girl")
-  couplesAsBoy  Couple[] @relation("Boy")
+  couplesAsCreator Couple[] @relation("Creator")
+  couplesAsPartner Couple[] @relation("Partner")
 }
 
 model Couple {
+  id              Int       @id @default(autoincrement())
+  creatorId       Int
+  partnerId       Int?      // null пока партнёр не принял приглашение
+  inviteToken     String?   @unique
+  inviteExpiresAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  creator User  @relation("Creator", fields: [creatorId], references: [id], onDelete: Cascade)
+  partner User? @relation("Partner", fields: [partnerId], references: [id], onDelete: SetNull)
+
+  wishes Wish[]
+  cycles Cycle[]
+}
+
+model Wish {
   id        Int      @id @default(autoincrement())
-  girlId    Int
-  boyId     Int
+  text      String
+  cost      Int      @default(0)
+  order     Int      @default(0)  // для drag & drop
+  done      Boolean  @default(false)
+  coupleId  Int
   createdAt DateTime @default(now())
 
-  girl User @relation("Girl", fields: [girlId], references: [id], onDelete: Cascade)
-  boy  User @relation("Boy", fields: [boyId], references: [id], onDelete: Cascade)
-
-  cycles Cycle[]
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
 }
 
 model Cycle {
@@ -37,16 +52,20 @@ model Cycle {
   startDate   DateTime
   cycleLength Int
   coupleId    Int
+  isActive    Boolean  @default(true)  // ← добавить
+  createdAt   DateTime @default(now())
 
-  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
-
-  wishes Wish[]
+  couple  Couple           @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  entries CycleWishEntry[]
 }
 
-model Wish {
-  id      Int    @id @default(autoincrement())
-  text    String
-  cycleId Int
+// Снапшот хотелок на момент создания цикла + статус выполнения
+model CycleWishEntry {
+  id       Int     @id @default(autoincrement())
+  cycleId  Int
+  wishText String
+  cost     Int
+  done     Boolean @default(false)
 
   cycle Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
 }
