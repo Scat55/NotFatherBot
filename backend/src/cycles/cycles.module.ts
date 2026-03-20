@@ -3,10 +3,11 @@ import { CyclesController } from './cycles.controller';
 import { CyclesService } from './cycles.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
+import { TemplatesModule } from '../templates/templates.module';
 import { TelegrafModule } from 'nestjs-telegraf';
 
 @Module({
-  imports: [PrismaModule, AuthModule, TelegrafModule],
+  imports: [PrismaModule, AuthModule, TemplatesModule, TelegrafModule],
   controllers: [CyclesController],
   providers: [CyclesService],
   exports: [CyclesService],

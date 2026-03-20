@@ -11,6 +11,8 @@ import { UsersModule } from './user/user.module';
 import { CouplesModule } from './couples/couples.module';
 import { WishesModule } from './wishes/wishes.module';
 import { CyclesModule } from './cycles/cycles.module';
+import { TemplatesModule } from './templates/templates.module';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 
 @Module({
   imports: [
@@ -21,6 +23,11 @@ import { CyclesModule } from './cycles/cycles.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         token: config.get<string>('BOT_TOKEN'),
+        telegrafOptions: {
+          telegram: {
+            agent: new SocksProxyAgent(config.get<string>('PROXY_URL')),
+          },
+        },
       }),
     }),
     PrismaModule,
@@ -29,6 +36,7 @@ import { CyclesModule } from './cycles/cycles.module';
     CouplesModule,
     WishesModule,
     CyclesModule,
+    TemplatesModule,
   ],
   controllers: [BotController],
   providers: [PrismaService, BotUpdate],

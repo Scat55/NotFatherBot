@@ -151,9 +151,9 @@ export class CouplesService {
       throw new BadRequestException('Couple already has a partner');
     }
 
-    // if (couple.creatorId === userId) {
-    //   throw new BadRequestException('Cannot join your own couple');
-    // }
+    if (couple.creatorId === userId) {
+      throw new BadRequestException('Cannot join your own couple');
+    }
 
     return this.prisma.couple.update({
       where: { inviteToken },

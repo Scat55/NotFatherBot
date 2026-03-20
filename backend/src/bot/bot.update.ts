@@ -1,4 +1,4 @@
-import { Update, Start, Command, Ctx } from 'nestjs-telegraf';
+import { Update, Start, Command, Ctx, On } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -42,23 +42,18 @@ export class BotUpdate {
       create: { telegramId, username, firstName, lastName, photoUrl },
     });
 
-    // Обработка логина через токен
     if (payload?.startsWith('login_')) {
       const token = payload.replace('login_', '');
-
       await this.prisma.telegramLogin.update({
         where: { token },
         data: { telegramId },
       });
-
       await ctx.reply('Авторизация подтверждена. Вернись на сайт.');
       return;
     }
 
-    // Обработка приглашения в пару через ссылку
     if (payload?.startsWith('invite_')) {
       const inviteToken = payload.replace('invite_', '');
-
       const couple = await this.prisma.couple.findUnique({
         where: { inviteToken },
       });
@@ -67,21 +62,18 @@ export class BotUpdate {
         await ctx.reply('Ссылка-приглашение недействительна.');
         return;
       }
-
       if (couple.inviteExpiresAt < new Date()) {
         await ctx.reply(
           'Срок действия ссылки истёк. Попроси партнёра создать новую.',
         );
         return;
       }
-
       if (couple.partnerId) {
         await ctx.reply('В эту пару уже кто-то вступил.');
         return;
       }
 
       const user = await this.prisma.user.findUnique({ where: { telegramId } });
-
       if (couple.creatorId === user.id) {
         await ctx.reply('Нельзя вступить в собственную пару.');
         return;
@@ -89,11 +81,7 @@ export class BotUpdate {
 
       await this.prisma.couple.update({
         where: { inviteToken },
-        data: {
-          partnerId: user.id,
-          inviteToken: null,
-          inviteExpiresAt: null,
-        },
+        data: { partnerId: user.id, inviteToken: null, inviteExpiresAt: null },
       });
 
       await ctx.reply('Ты вступил в пару ✅');
@@ -101,6 +89,59 @@ export class BotUpdate {
     }
 
     await ctx.reply('Ты зарегистрирован в системе.');
+  }
+
+  // Обработчик текстовых сообщений — реагирует на "ДА"
+  @On('text')
+  async onText(@Ctx() ctx: Context) {
+    if (!('text' in ctx.message)) return;
+
+    const text = ctx.message.text.trim();
+
+    // Пропускаем команды
+    if (text.startsWith('/')) return;
+
+    const telegramId = ctx.from.id.toString();
+
+    if (text.toLowerCase() === 'да') {
+      const user = await this.prisma.user.findUnique({ where: { telegramId } });
+      if (!user) return;
+
+      // Находим пару где пользователь партнёр
+      const couple = await this.prisma.couple.findFirst({
+        where: { partnerId: user.id },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!couple) return;
+
+      // Берём шаблоны создателя с includeWishes: true
+      const templates = await this.prisma.template.findMany({
+        where: { userId: couple.creatorId, includeWishes: true },
+        orderBy: { order: 'asc' },
+      });
+
+      if (!templates.length) return;
+
+      // Получаем хотелки пары
+      const wishes = await this.prisma.wish.findMany({
+        where: { coupleId: couple.id },
+        orderBy: { order: 'asc' },
+      });
+
+      const wishesText = wishes.length
+        ? wishes.map((w, i) => `- ${w.text}`).join('\n')
+        : 'Список пока пуст.';
+
+      for (const template of templates) {
+        // Подставляем хотелки вместо {{wishes}} если есть плейсхолдер
+        const messageText = template.text.includes('{{wishes}}')
+          ? template.text.replace('{{wishes}}', wishesText)
+          : `${template.text}\n\n${wishesText}`;
+
+        await ctx.reply(messageText);
+      }
+    }
   }
 
   @Command('wish')
@@ -115,16 +156,13 @@ export class BotUpdate {
 
     const telegramId = ctx.from.id.toString();
     const user = await this.prisma.user.findUnique({ where: { telegramId } });
-
     if (!user) {
       await ctx.reply('Сначала нажми /start, чтобы зарегистрироваться');
       return;
     }
 
     const couple = await this.prisma.couple.findFirst({
-      where: {
-        OR: [{ creatorId: user.id }, { partnerId: user.id }],
-      },
+      where: { OR: [{ creatorId: user.id }, { partnerId: user.id }] },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -133,7 +171,6 @@ export class BotUpdate {
       return;
     }
 
-    // Только создатель пары может добавлять хотелки
     if (couple.creatorId !== user.id) {
       await ctx.reply('Добавлять хотелки может только создатель пары.');
       return;
@@ -145,11 +182,7 @@ export class BotUpdate {
     });
 
     const wish = await this.prisma.wish.create({
-      data: {
-        text,
-        coupleId: couple.id,
-        order: last ? last.order + 1 : 0,
-      },
+      data: { text, coupleId: couple.id, order: last ? last.order + 1 : 0 },
     });
 
     await ctx.reply(`Желание добавлено ✅\n\n${wish.text}`);
@@ -158,7 +191,6 @@ export class BotUpdate {
   @Command('pairs')
   async myPairs(@Ctx() ctx: Context) {
     const telegramId = ctx.from.id.toString();
-
     const user = await this.prisma.user.findUnique({ where: { telegramId } });
     if (!user) {
       await ctx.reply('Сначала нажми /start, чтобы зарегистрироваться');
@@ -166,13 +198,8 @@ export class BotUpdate {
     }
 
     const couples = await this.prisma.couple.findMany({
-      where: {
-        OR: [{ creatorId: user.id }, { partnerId: user.id }],
-      },
-      include: {
-        creator: true,
-        partner: true,
-      },
+      where: { OR: [{ creatorId: user.id }, { partnerId: user.id }] },
+      include: { creator: true, partner: true },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -202,7 +229,6 @@ export class BotUpdate {
   @Command('wishes')
   async myWishes(@Ctx() ctx: Context) {
     const telegramId = ctx.from.id.toString();
-
     const user = await this.prisma.user.findUnique({ where: { telegramId } });
     if (!user) {
       await ctx.reply('Сначала нажми /start, чтобы зарегистрироваться');
@@ -210,9 +236,7 @@ export class BotUpdate {
     }
 
     const couple = await this.prisma.couple.findFirst({
-      where: {
-        OR: [{ creatorId: user.id }, { partnerId: user.id }],
-      },
+      where: { OR: [{ creatorId: user.id }, { partnerId: user.id }] },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -243,14 +267,10 @@ export class BotUpdate {
   async createCycle(@Ctx() ctx: Context) {
     const telegramId = ctx.from.id.toString();
     const args = ctx.message['text'].split(' ').slice(1).filter(Boolean);
-    const lengthArg = args[0];
-    const dateArg = args[1];
-    const cycleLength = Number(lengthArg);
+    const cycleLength = Number(args[0]);
 
     if (!cycleLength || cycleLength <= 0) {
-      await ctx.reply(
-        'Укажи длину цикла в днях, например:\n/cycle 28 или /cycle 28 2026-03-09',
-      );
+      await ctx.reply('Укажи длину цикла в днях, например:\n/cycle 28');
       return;
     }
 
@@ -271,15 +291,9 @@ export class BotUpdate {
     }
 
     let startDate = new Date();
-    if (dateArg) {
-      const parsed = new Date(dateArg);
-      if (Number.isNaN(parsed.getTime())) {
-        await ctx.reply(
-          'Не смог разобрать дату. Используй формат:\n/cycle 28 2026-03-09',
-        );
-        return;
-      }
-      startDate = parsed;
+    if (args[1]) {
+      const parsed = new Date(args[1]);
+      if (!Number.isNaN(parsed.getTime())) startDate = parsed;
     }
 
     const cycle = await this.prisma.cycle.create({
@@ -292,14 +306,12 @@ export class BotUpdate {
   @Command('period')
   async periodStart(@Ctx() ctx: Context) {
     const telegramId = ctx.from.id.toString();
-
     const user = await this.prisma.user.findUnique({ where: { telegramId } });
     if (!user) {
       await ctx.reply('Сначала нажми /start, чтобы зарегистрироваться');
       return;
     }
 
-    // Только создатель пары может запускать период
     const couple = await this.prisma.couple.findFirst({
       where: { creatorId: user.id },
       orderBy: { createdAt: 'desc' },
@@ -307,8 +319,7 @@ export class BotUpdate {
 
     if (!couple) {
       await ctx.reply(
-        'Эта команда доступна только создателю пары.\n' +
-          'Сначала создай пару на сайте.',
+        'Эта команда доступна только создателю пары.\nСначала создай пару на сайте.',
       );
       return;
     }
@@ -320,45 +331,14 @@ export class BotUpdate {
 
     const cycleLength = previousCycle?.cycleLength ?? 28;
 
-    const newCycle = await this.prisma.cycle.create({
+    await this.prisma.cycle.create({
       data: { coupleId: couple.id, startDate: new Date(), cycleLength },
     });
-
-    // Получаем текущие хотелки пары для отправки партнёру
-    const wishes = await this.prisma.wish.findMany({
-      where: { coupleId: couple.id, done: false },
-      orderBy: { order: 'asc' },
-    });
-
-    let wishesText = '';
-    if (wishes.length) {
-      const lines = wishes.map(
-        (wish, index) => `${index + 1}. ${wish.text} (${wish.cost} 🪙)`,
-      );
-      wishesText = `\n\nВот её желания:\n\n${lines.join('\n')}`;
-    } else {
-      wishesText =
-        '\n\nПока нет сохранённых желаний. Спросите её, чего бы ей хотелось ❤️';
-    }
-
-    if (couple.partnerId) {
-      const partner = await this.prisma.user.findUnique({
-        where: { id: couple.partnerId },
-      });
-
-      if (partner?.telegramId) {
-        await ctx.telegram.sendMessage(
-          partner.telegramId,
-          `У вашей пары сегодня начался новый цикл.\n` +
-            `Длина: ${newCycle.cycleLength} дней.${wishesText}`,
-        );
-      }
-    }
 
     await ctx.reply(
       `Новый цикл на ${cycleLength} дней запущен ✅\n` +
         (couple.partnerId
-          ? 'Я отправил партнёру список хотелок.'
+          ? 'Я отправил партнёру уведомление.'
           : 'Партнёр ещё не присоединился к паре.'),
     );
   }

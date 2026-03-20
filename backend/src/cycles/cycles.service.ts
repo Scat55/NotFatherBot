@@ -7,6 +7,7 @@ import {
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
+import { TemplatesService } from '../templates/templates.service';
 
 interface CreateCycleDto {
   cycleLength?: number;
@@ -17,6 +18,7 @@ interface CreateCycleDto {
 export class CyclesService {
   constructor(
     private prisma: PrismaService,
+    private templatesService: TemplatesService,
     @InjectBot() private bot: Telegraf,
   ) {}
 
@@ -83,7 +85,7 @@ export class CyclesService {
       data: { coupleId, startDate, cycleLength, isActive: true },
     });
 
-    // Копируем хотелки пары как снапшот
+    // Копируем хотелки как снапшот
     const wishes = await this.prisma.wish.findMany({
       where: { coupleId },
       orderBy: { order: 'asc' },
@@ -100,33 +102,47 @@ export class CyclesService {
       });
     }
 
-    // Уведомляем партнёра о новом цикле
+    // Отправляем партнёру только шаблоны БЕЗ хотелок
     if (couple.partnerId) {
       const partner = await this.prisma.user.findUnique({
         where: { id: couple.partnerId },
       });
 
       if (partner?.telegramId) {
-        const creator = await this.prisma.user.findUnique({
-          where: { id: couple.creatorId },
-        });
+        const allTemplates = await this.templatesService.findAll(userId);
+        const templatesWithoutWishes = allTemplates.filter(
+          (t) => !t.includeWishes,
+        );
 
-        const creatorName =
-          creator?.username ||
-          `${creator?.firstName ?? ''} ${creator?.lastName ?? ''}`.trim() ||
-          'Партнёр';
+        for (const template of templatesWithoutWishes) {
+          this.bot.telegram
+            .sendMessage(partner.telegramId, template.text)
+            .catch((e) =>
+              console.warn(
+                `Не удалось отправить шаблон "${template.title}":`,
+                e.message,
+              ),
+            );
+        }
 
-        const wishesText = wishes.length
-          ? `\n\nСписок хотелок:\n\n${wishes.map((w, i) => `${i + 1}. ${w.text} — ${w.cost} 🪙`).join('\n')}`
-          : '\n\nСписок хотелок пока пуст.';
+        // Если нет шаблонов без хотелок — базовое уведомление
+        if (!templatesWithoutWishes.length) {
+          const creator = await this.prisma.user.findUnique({
+            where: { id: couple.creatorId },
+          });
+          const creatorName =
+            creator?.username ||
+            `${creator?.firstName ?? ''} ${creator?.lastName ?? ''}`.trim() ||
+            'Партнёр';
 
-        try {
-          await this.bot.telegram.sendMessage(
-            partner.telegramId,
-            `❗️ ${creatorName} запустила новый цикл!\nДлина: ${cycleLength} дней.${wishesText}`,
-          );
-        } catch (e) {
-          console.warn('Не удалось отправить уведомление партнёру:', e);
+          this.bot.telegram
+            .sendMessage(
+              partner.telegramId,
+              `❗️ ${creatorName} запустила новый цикл!\nДлина: ${cycleLength} дней.`,
+            )
+            .catch((e) =>
+              console.warn('Не удалось отправить уведомление:', e.message),
+            );
         }
       }
     }
@@ -198,14 +214,14 @@ export class CyclesService {
           `${partner?.firstName ?? ''} ${partner?.lastName ?? ''}`.trim() ||
           'Партнёр';
 
-        try {
-          await this.bot.telegram.sendMessage(
+        this.bot.telegram
+          .sendMessage(
             creator.telegramId,
             `✅ ${partnerName} выполнил хотелку «${entry.wishText}» и получил ${entry.cost} 🪙`,
+          )
+          .catch((e) =>
+            console.warn('Не удалось отправить уведомление:', e.message),
           );
-        } catch (e) {
-          console.warn('Не удалось отправить уведомление создателю:', e);
-        }
       }
     }
 
