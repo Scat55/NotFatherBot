@@ -76,7 +76,7 @@ export class WishesService {
       if (dto.done && !wish.done) {
         await this.prisma.user.update({
           where: { id: userId },
-          data: { balance: { increment: wish.cost } },
+          data: { balance: { increment: Number(wish.cost) } },
         });
       }
 
@@ -84,14 +84,17 @@ export class WishesService {
       if (!dto.done && wish.done) {
         await this.prisma.user.update({
           where: { id: userId },
-          data: { balance: { decrement: wish.cost } },
+          data: { balance: { decrement: Number(wish.cost) } },
         });
       }
     }
 
     return this.prisma.wish.update({
       where: { id: wishId },
-      data: dto,
+      data: {
+        ...dto,
+        ...(dto.cost !== undefined && { cost: Number(dto.cost) }),
+      },
     });
   }
 
