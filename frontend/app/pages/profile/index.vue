@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Switch from "@/components/ui/switch/Switch.vue";
 import { useUserStore } from "@/stores/user";
+import { useNumberFormat } from "~/composables/useFormatNumber";
 
 definePageMeta({
   middleware: ["auth"],
@@ -16,6 +17,7 @@ const colorMode = useColorMode();
 await userStore.fetchMe();
 
 const { user, initials } = storeToRefs(userStore);
+const { format } = useNumberFormat();
 
 const joinDate = computed(() => {
   if (!user.value?.createdAt) return "—";
@@ -150,7 +152,7 @@ const isDark = computed({
                   Баланс монет
                 </p>
                 <p class="text-3xl font-bold tracking-tight text-foreground">
-                  {{ user?.balance ?? 0 }}
+                  {{ format(user?.balance ?? 0) }}
                   <span class="text-base font-medium text-muted-foreground ml-1"
                     >монет</span
                   >
