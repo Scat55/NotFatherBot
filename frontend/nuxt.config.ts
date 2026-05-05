@@ -5,24 +5,30 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   css: ["~/assets/css/tailwind.css"],
-  modules: ["@nuxt/eslint", "@nuxt/fonts", "shadcn-nuxt", '@pinia/nuxt', '@nuxtjs/color-mode',],
+  app: {
+    head: {
+      link: [
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap",
+        },
+      ],
+    },
+  },
+  modules: ["@nuxt/eslint", "shadcn-nuxt", "@pinia/nuxt", "@nuxtjs/color-mode"],
   vite: {
     plugins: [tailwindcss()],
   },
   colorMode: {
-    classSuffix: '',
-    storageKey: 'color-mode',
-    preference: 'dark',
-    fallback: 'dark',
+    classSuffix: "",
+    storageKey: "color-mode",
+    preference: "dark",
+    fallback: "dark",
   },
 
   shadcn: {
     prefix: "",
     componentDir: "@/components/ui",
-  },
-
-  fonts: {
-    // Options
   },
 
   runtimeConfig: {
