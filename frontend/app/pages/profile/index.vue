@@ -41,10 +41,10 @@ const isDark = computed({
     <!-- Ambient blobs -->
     <div class="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
       <div
-        class="absolute -top-32 -right-24 w-[500px] h-[500px] rounded-full bg-primary opacity-15 blur-[90px] animate-[drift_12s_ease-in-out_infinite_alternate]"
+        class="absolute -top-32 -right-24 w-125 h-125 rounded-full bg-primary opacity-15 blur-[90px] animate-[drift_12s_ease-in-out_infinite_alternate]"
       />
       <div
-        class="absolute -bottom-24 -left-20 w-[360px] h-[360px] rounded-full bg-accent opacity-15 blur-[80px] animate-[drift_16s_ease-in-out_infinite_alternate-reverse]"
+        class="absolute -bottom-24 -left-20 w-90 h-90 rounded-full bg-accent opacity-15 blur-[80px] animate-[drift_16s_ease-in-out_infinite_alternate-reverse]"
       />
     </div>
 
@@ -54,7 +54,7 @@ const isDark = computed({
       <!-- Top: Avatar card -->
       <Card class="overflow-hidden border-border/60">
         <div
-          class="h-28 bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10"
+          class="h-28 bg-linear-to-r from-primary/30 via-accent/20 to-primary/10"
         />
         <CardContent class="pt-0 pb-6 px-6">
           <div
@@ -62,7 +62,7 @@ const isDark = computed({
           >
             <div class="relative w-fit">
               <div
-                class="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-accent blur-[6px] opacity-60 scale-110"
+                class="absolute inset-0 rounded-full bg-linear-to-br from-primary to-accent blur-[6px] opacity-60 scale-110"
               />
               <Avatar
                 class="relative w-20 h-20 border-4 border-card text-lg font-semibold"
@@ -93,7 +93,7 @@ const isDark = computed({
             <div class="flex gap-2 flex-wrap">
               <Badge variant="secondary">Участник</Badge>
               <Badge
-                class="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
+                class="bg-primary/20 text-secondary-foreground border-primary/30 hover:bg-primary/30"
               >
                 Активен
               </Badge>
@@ -160,7 +160,7 @@ const isDark = computed({
               </div>
             </div>
             <Badge
-              class="bg-primary/15 text-primary border-primary/25 text-xs px-3 py-1"
+              class="bg-primary/15 text-secondary-foreground border-primary/25 text-xs px-3 py-1"
             >
               Скоро: геймификация
             </Badge>
