@@ -16,19 +16,31 @@ import { SocksProxyAgent } from 'socks-proxy-agent';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      envFilePath:
+        process.env.NODE_ENV === 'production'
+          ? '.env.production'
+          : '.env.development',
+    }),
 
     TelegrafModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        token: config.get<string>('BOT_TOKEN'),
-        telegrafOptions: {
-          telegram: {
-            agent: new SocksProxyAgent(config.get<string>('PROXY_URL')),
-          },
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const token = config.get<string>('BOT_TOKEN');
+        const proxyUrl = config.get<string>('PROXY_URL');
+
+        return {
+          token,
+          telegrafOptions: proxyUrl
+            ? {
+                telegram: {
+                  agent: new SocksProxyAgent(proxyUrl),
+                },
+              }
+            : {},
+        };
+      },
     }),
     PrismaModule,
     AuthModule,

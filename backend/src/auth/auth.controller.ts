@@ -9,12 +9,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth/telegram')
 export class AuthController {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private config: ConfigService,
   ) {}
 
   @Post('start')
@@ -30,7 +32,7 @@ export class AuthController {
 
     return {
       token,
-      url: `https://t.me/NotFatherNotification_Bot?start=login_${token}`,
+      url: `https://t.me/${this.config.get('BOT_USERNAME')}?start=login_${token}`,
     };
   }
 
