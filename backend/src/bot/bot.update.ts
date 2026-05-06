@@ -130,7 +130,7 @@ export class BotUpdate {
       });
 
       const wishesText = wishes.length
-        ? wishes.map((w, i) => `- ${w.text}`).join('\n')
+        ? wishes.map((w) => `- ${w.text}`).join('\n')
         : 'Список пока пуст.';
 
       for (const template of templates) {

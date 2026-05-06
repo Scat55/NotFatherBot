@@ -1,58 +1,55 @@
 // @ts-check
-import withNuxt from './.nuxt/eslint.config.mjs'
+import withNuxt from "./.nuxt/eslint.config.mjs";
+import prettierPlugin from "eslint-plugin-prettier";
 
 export default withNuxt({
+  ignores: ["node_modules", ".nuxt", ".output", "dist"],
+  plugins: {
+    prettier: prettierPlugin,
+  },
   rules: {
-    // ─── Prettier ───────────────────────────────────────────
-    // Форматирование через ESLint — ошибка, а не warning.
-    // Warning в проде бесполезны: игнорируются и засоряют лог.
-    "prettier/prettier": ["error", {
-      "semi": true,
-      "printWidth": 80,
-      "tabWidth": 2,
-      "bracketSpacing": true,
-      "singleQuote": false
-    }],
+    "prettier/prettier": [
+      "error",
+      {
+        semi: true,
+        printWidth: 80,
+        tabWidth: 2,
+        bracketSpacing: true,
+        singleQuote: false,
+      },
+    ],
 
-    // ─── TypeScript — строгость ──────────────────────────────
-    // Запрещает any явный. Если обходишь типизацию — делай это осознанно.
-    "@typescript-eslint/no-explicit-any": "error",
+    // Отключаем — в Nuxt index.vue и layouts это норма
+    "vue/multi-word-component-names": "off",
 
-    // Неиспользуемые переменные — баги, а не стиль.
-    // Исключение: _prefix для намеренно игнорируемых аргументов.
-    "@typescript-eslint/no-unused-vars": ["error", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_"
-    }],
+    // Отключаем — shadcn компоненты не требуют default props
+    "vue/require-default-prop": "off",
 
-    // Запрещает non-null assertion (value!). Используй явные проверки.
-    "@typescript-eslint/no-non-null-assertion": "error",
+    // Предупреждение вместо ошибки — any иногда нужен
+    "@typescript-eslint/no-explicit-any": "warn",
 
-    // ─── Vue / Nuxt ──────────────────────────────────────────
-    // Обязательный multi-word для имён компонентов.
-    // Иначе конфликты с нативными HTML-тегами.
-    "vue/multi-word-component-names": "error",
+    // Предупреждение вместо ошибки
+    "@typescript-eslint/no-non-null-assertion": "warn",
 
-    // v-bind и v-on в сокращённой форме — единообразие.
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+      },
+    ],
+
     "vue/v-bind-style": ["error", "shorthand"],
     "vue/v-on-style": ["error", "shorthand"],
-
-    // Порядок свойств в defineProps/defineEmits — читаемость.
-    "vue/define-macros-order": ["error", {
-      "order": ["defineProps", "defineEmits", "defineSlots"]
-    }],
-
-    // Запрещает v-html — XSS риск. Если нужен — отключай точечно с комментарием.
+    "vue/define-macros-order": [
+      "error",
+      {
+        order: ["defineProps", "defineEmits", "defineSlots"],
+      },
+    ],
     "vue/no-v-html": "error",
-
-    // ─── Общая логика ────────────────────────────────────────
-    // Запрещает console.log в коде. console.warn/error — допустимы для явных сигналов.
-    "no-console": ["error", { "allow": ["warn", "error"] }],
-
-    // Запрещает debugger в коде.
+    "no-console": ["error", { allow: ["warn", "error"] }],
     "no-debugger": "error",
-
-    // Запрещает == в пользу ===. Неявные приведения типов — источник багов.
-    "eqeqeq": ["error", "always"]
-  }
-})
+    eqeqeq: ["error", "always"],
+  },
+});

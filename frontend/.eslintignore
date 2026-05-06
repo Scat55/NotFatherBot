@@ -1,0 +1,4 @@
+echo "node_modules
+.nuxt
+.output
+dist" > frontend/.eslintignore

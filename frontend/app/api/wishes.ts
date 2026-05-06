@@ -9,7 +9,11 @@ export interface Wish {
 }
 
 export const wishesApi = {
-  getAll: async (baseUrl: string, token: string, coupleId: number): Promise<Wish[]> => {
+  getAll: async (
+    baseUrl: string,
+    token: string,
+    coupleId: number,
+  ): Promise<Wish[]> => {
     return $fetch<Wish[]>(`${baseUrl}/couples/${coupleId}/wishes`, {
       headers: { Authorization: `Bearer ${token}` },
     });

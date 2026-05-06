@@ -25,7 +25,11 @@ export const couplesApi = {
     });
   },
 
-  getOne: async (baseUrl: string, token: string, id: number): Promise<Couple> => {
+  getOne: async (
+    baseUrl: string,
+    token: string,
+    id: number,
+  ): Promise<Couple> => {
     return $fetch<Couple>(`${baseUrl}/couples/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -45,14 +49,22 @@ export const couplesApi = {
     });
   },
 
-  refreshInvite: async (baseUrl: string, token: string, id: number): Promise<Couple> => {
+  refreshInvite: async (
+    baseUrl: string,
+    token: string,
+    id: number,
+  ): Promise<Couple> => {
     return $fetch<Couple>(`${baseUrl}/couples/${id}/invite`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
   },
 
-  join: async (baseUrl: string, token: string, inviteToken: string): Promise<Couple> => {
+  join: async (
+    baseUrl: string,
+    token: string,
+    inviteToken: string,
+  ): Promise<Couple> => {
     return $fetch<Couple>(`${baseUrl}/couples/join/${inviteToken}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },

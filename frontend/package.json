@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint": "eslint --config eslint.config.mjs ."
   },
   "dependencies": {
     "@nuxt/eslint": "^1.15.2",
@@ -32,6 +33,8 @@
     "@tailwindcss/vite": "^4.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "prettier-plugin-vue": "^1.1.6",
     "tailwindcss": "^4.2.1",
