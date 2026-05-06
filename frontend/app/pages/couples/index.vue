@@ -120,10 +120,6 @@ const formatDate = (dateStr: string) =>
           {{ couples?.length === 1 ? "пара" : "пары" }}
         </p>
       </div>
-      <Button class="gap-2" size="sm" :disabled="loading" @click="createCouple">
-        <Plus class="w-4 h-4" />
-        Создать пару
-      </Button>
     </div>
 
     <!-- Pending invite -->
