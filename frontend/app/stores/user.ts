@@ -10,13 +10,11 @@ export const useUserStore = defineStore("user", () => {
   const error = ref<string | null>(null);
 
   const isLogin = computed(() => {
-    return !!token.value
-  })
+    return !!token.value;
+  });
 
   const fullName = computed(() =>
-    user.value
-      ? `${user.value.firstName} ${user.value.lastName}`.trim()
-      : ""
+    user.value ? `${user.value.firstName} ${user.value.lastName}`.trim() : "",
   );
 
   const initials = computed(() => {
@@ -31,6 +29,7 @@ export const useUserStore = defineStore("user", () => {
     error.value = null;
     try {
       user.value = await userApi.getMe(config.public.apiBase, token.value);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       error.value = "Не удалось загрузить профиль";
     } finally {
@@ -38,7 +37,7 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-    function logout() {
+  function logout() {
     token.value = null;
     user.value = null;
     error.value = null;

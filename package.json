@@ -1,0 +1,7 @@
+{
+  "name": "not-father",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  }
+}

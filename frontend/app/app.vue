@@ -10,7 +10,7 @@ onMounted(async () => {
 </script>
 <template>
   <div>
-    <Toaster position="top-center" richColors />
+    <Toaster position="top-center" rich-colors />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   firstName: string;
@@ -15,7 +14,7 @@ export interface User {
   achievements?: number;
   createdAt?: string;
 }
- 
+
 export const userApi = {
   getMe: async (baseUrl: string, token: string): Promise<User> => {
     const data = await $fetch<User>(`${baseUrl}/users/me`, {
@@ -26,4 +25,3 @@ export const userApi = {
     return data;
   },
 };
- 
